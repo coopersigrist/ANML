@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from torch import nn
 from torch.nn import functional as F
+from .layers import AConv2d, ALinear, AConvTranspose2d
 
 logger = logging.getLogger("experiment")
 
@@ -265,6 +266,9 @@ class Learner(nn.Module):
                 data = F.batch_norm(data, running_mean, running_var, weight=w, bias=b, training=True)
                 data = F.relu(data)
                 #data = maxpool(data, kernel_size=2, stride=2)
+
+                data = ALinear(data, 256, 256)
+                data = F.relu(data)
 
                 data = data.view(data.size(0), 2304) #nothing-max-max
                 data = data*fc_mask
