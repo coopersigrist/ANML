@@ -267,12 +267,13 @@ class Learner(nn.Module):
                 data = F.relu(data)
                 #data = maxpool(data, kernel_size=2, stride=2)
 
-                data = ALinear(data, 256, 256)
-                data = F.relu(data)
+                Alin_layer = ALinear(3, 768)
+                Alin_layer(data, 0)
 
                 data = data.view(data.size(0), 2304) #nothing-max-max
                 data = data*fc_mask
 
+                
 
                 w,b = vars[26], vars[27]
                 data = F.linear(data, w, b)
