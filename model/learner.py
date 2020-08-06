@@ -260,18 +260,33 @@ class Learner(nn.Module):
                 
                 w,b = vars[22], vars[23]
 
-                data = conv2d(data, w, b, stride=1)
+                # replace Aconv2d here vv to get adjacency then mult by fc mask
+
+                if torch.cuda.is_available():
+                    device = torch.device('cuda')
+                    print('CUDA  BABY')
+                else:
+                    device = torch.device('cpu')
+
+                AConv_layer = AConv2d(256, 1, 3, mask=fc_mask).to(torch.device(device))
+                data = AConv_layer(data, 0)
+                print(data.shape)
+
+
+                # data = conv2d(data, w, b, stride=1)
+                # print(data.shape)
                 w,b, = vars[24], vars[25]
                 running_mean, running_var = self.vars_bn[10], self.vars_bn[11]
                 data = F.batch_norm(data, running_mean, running_var, weight=w, bias=b, training=True)
                 data = F.relu(data)
                 #data = maxpool(data, kernel_size=2, stride=2)
 
-                Alin_layer = ALinear(3, 768)
-                Alin_layer(data, 0)
+                # Alin_layer = ALinear(3, 768)
+                # Alin_layer(data, 0)
 
                 data = data.view(data.size(0), 2304) #nothing-max-max
-                data = data*fc_mask
+                # data = data*fc_mask
+                # print(data.shape)
 
                 
 

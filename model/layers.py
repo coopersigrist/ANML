@@ -6,11 +6,25 @@ import torch.nn.functional as F
 
 class AConv2d(nn.Conv2d):
 
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, bias=False, datasets=1, same_init=False, Beta=False):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, bias=False, datasets=1, same_init=False, Beta=False, mask=None):
         super().__init__(in_channels, out_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, bias=bias)
         
+
+        cuda = torch.device('cuda')
+
+        mask = mask.view((256, 1, 3, 3))
+        # self.weight = nn.Parameter(torch.reshape(self.weight, mask.shape))
+
+        print(self.weight.shape)
+        print(mask.shape)
+
+        if mask is not None:
+            self.adjx = nn.ParameterList([nn.Parameter(mask * (torch.Tensor(self.weight.shape).uniform_(0, 1).to(cuda)) ,requires_grad=True) for i in range(datasets)])
+        else:
+             self.adjx = nn.ParameterList([nn.Parameter(torch.Tensor(self.weight.shape).uniform_(0, 1).to(cuda),requires_grad=True) for i in range(datasets)])
+
         self.multi=False
-        self.adjx = nn.ParameterList([nn.Parameter(torch.Tensor(self.weight.shape).uniform_(0, 1),requires_grad=True) for i in range(datasets)])
+       
         if same_init:
             for ix in range(1, datasets):
                 self.adjx[ix] = self.adjx[0]
@@ -20,6 +34,12 @@ class AConv2d(nn.Conv2d):
             self.initial_beta = self.beta
         else:
             self.Beta = False
+
+    # get adjacency func
+
+    def mult_adj(self, to_mult):
+        ''' Takes a Tensor -- to_mult -- and changes the adjacency matrix to be itself multiplied by the new tensor'''
+        self.adjx
         
     def soft_round(self, x, beta = 100):
         return (1 / (1 + torch.exp(-(beta * (x - 0.5)))))
@@ -32,7 +52,7 @@ class AConv2d(nn.Conv2d):
             
         if self.Beta:
             return F.conv2d(input, self.soft_round(self.adjx[dataset], self.beta)*self.weight, bias=self.bias, stride=self.stride, padding=self.padding, dilation=self.dilation)
-        return F.conv2d(input, self.soft_round(self.adjx[dataset])*self.weight, bias=self.bias, stride=self.stride, padding=self.padding, dilation=self.dilation)
+        return F.conv2d(input, (self.soft_round(self.adjx[dataset])*self.weight), bias=self.bias, stride=self.stride, padding=self.padding, dilation=self.dilation)
 
     def get_nconnections(self, dataset):
         try:
