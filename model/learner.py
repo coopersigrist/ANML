@@ -264,13 +264,11 @@ class Learner(nn.Module):
 
                 if torch.cuda.is_available():
                     device = torch.device('cuda')
-                    print('CUDA  BABY')
                 else:
                     device = torch.device('cpu')
 
                 AConv_layer = AConv2d(256, 1, 3, mask=fc_mask).to(torch.device(device))
                 data = AConv_layer(data, 0)
-                print(data.shape)
 
 
                 # data = conv2d(data, w, b, stride=1)

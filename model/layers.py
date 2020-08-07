@@ -15,8 +15,6 @@ class AConv2d(nn.Conv2d):
         mask = mask.view((256, 1, 3, 3))
         # self.weight = nn.Parameter(torch.reshape(self.weight, mask.shape))
 
-        print(self.weight.shape)
-        print(mask.shape)
 
         if mask is not None:
             self.adjx = nn.ParameterList([nn.Parameter(mask * (torch.Tensor(self.weight.shape).uniform_(0, 1).to(cuda)) ,requires_grad=True) for i in range(datasets)])

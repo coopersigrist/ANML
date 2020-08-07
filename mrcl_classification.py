@@ -12,6 +12,9 @@ import utils.utils as utils
 from experiment.experiment import experiment
 from model.meta_learner import MetaLearingClassification
 
+import matplotlib.pyplot as plt
+
+
 logger = logging.getLogger('experiment')
 
 
@@ -56,6 +59,12 @@ def main(args):
     maml = maml.to(device)
 
     utils.freeze_layers(args.rln, maml)
+
+    # Lists for plotting
+
+    losses = []
+    steps = []
+    accuracies = []
     
     for step in range(args.steps):
 
@@ -78,6 +87,24 @@ def main(args):
         if step % 40 == 0:
             #writer.add_scalar('/metatrain/train/accuracy', accs, step)
             logger.info('step: %d \t training acc %s', step, str(accs))
+            losses.append(loss)
+            accuracies.append(accs)
+            steps.append(step)
+
+            if step is not 0:
+                ax1.clear()
+                ax2.clear()
+                plt.close()
+
+            fig, (ax1, ax2) = plt.subplots(2, sharex=True)
+            fig.suptitle('Loss and Accuracy of ANML w/ ACONV')
+            ax1.plot(steps, losses)
+            ax1.set_title("Loss")
+            ax2.plot(steps, accuracies)
+            ax2.set_title("accuracy")
+
+            plt.pause(1e-18)
+
         if step % 100 == 0 or step == 19999:
             torch.save(maml.net, args.model_name)
         if step % 2000 == 0 and step != 0:
