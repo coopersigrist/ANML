@@ -47,6 +47,7 @@ def main(args):
         device = torch.device('cuda')
     else:
         device = torch.device('cpu')
+    
 
     maml = MetaLearingClassification(args, config, args.treatment).to(device)
     
@@ -91,25 +92,37 @@ def main(args):
             accuracies.append(accs)
             steps.append(step)
 
-            if step is not 0:
-                ax1.clear()
-                ax2.clear()
-                plt.close()
+            # if step is not 0:
+            #     ax1.clear()
+            #     ax2.clear()
+                
+            #     plt.clf()
+            #     plt.close()
+            #     torch.cuda.empty_cache()
 
-            fig, (ax1, ax2) = plt.subplots(2, sharex=True)
-            fig.suptitle('Loss and Accuracy of ANML w/ ACONV')
-            ax1.plot(steps, losses)
-            ax1.set_title("Loss")
-            ax2.plot(steps, accuracies)
-            ax2.set_title("accuracy")
+            # fig, (ax1, ax2) = plt.subplots(2, sharex=True)
+            # fig.suptitle('Loss and Accuracy of ANML w/ ACONV')
+            # ax1.plot(steps, losses)
+            # ax1.set_title("Loss")
+            # ax2.plot(steps, accuracies)
+            # ax2.set_title("accuracy")
 
-            plt.pause(1e-18)
+            # plt.pause(1e-18)
 
         if step % 100 == 0 or step == 19999:
             torch.save(maml.net, args.model_name)
         if step % 2000 == 0 and step != 0:
             utils.log_accuracy(maml, my_experiment, iterator_test, device, writer, step)
             utils.log_accuracy(maml, my_experiment, iterator_train, device, writer, step)
+
+
+    fig, (ax1, ax2) = plt.subplots(2, sharex=True)
+    fig.suptitle('Loss and Accuracy of ANML w/ ACONV')
+    ax1.plot(steps, losses)
+    ax1.set_title("Loss")
+    ax2.plot(steps, accuracies)
+    ax2.set_title("accuracy")  
+    plt.savefig("testplot.png")
 
 #
 if __name__ == '__main__':

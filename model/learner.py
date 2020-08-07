@@ -267,6 +267,7 @@ class Learner(nn.Module):
                 else:
                     device = torch.device('cpu')
 
+
                 AConv_layer = AConv2d(256, 1, 3, mask=fc_mask).to(torch.device(device))
                 data = AConv_layer(data, 0)
 
