@@ -86,28 +86,9 @@ def main(args):
 
         # Evaluation during training for sanity checks
         if step % 40 == 0:
-            #writer.add_scalar('/metatrain/train/accuracy', accs, step)
+            writer.add_scalar('/metatrain/train/accuracy', accs, step)
+            writer.add_scalar('/metatrain/train/loss', loss, step)
             logger.info('step: %d \t training acc %s', step, str(accs))
-            losses.append(loss)
-            accuracies.append(accs)
-            steps.append(step)
-
-            # if step is not 0:
-            #     ax1.clear()
-            #     ax2.clear()
-                
-            #     plt.clf()
-            #     plt.close()
-            #     torch.cuda.empty_cache()
-
-            # fig, (ax1, ax2) = plt.subplots(2, sharex=True)
-            # fig.suptitle('Loss and Accuracy of ANML w/ ACONV')
-            # ax1.plot(steps, losses)
-            # ax1.set_title("Loss")
-            # ax2.plot(steps, accuracies)
-            # ax2.set_title("accuracy")
-
-            # plt.pause(1e-18)
 
         if step % 100 == 0 or step == 19999:
             torch.save(maml.net, args.model_name)
