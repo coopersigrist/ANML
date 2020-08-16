@@ -23,6 +23,12 @@ def maxpool(input, kernel_size, stride=None):
 def conv2d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
     return F.conv2d(input, weight, bias, stride, padding, dilation, groups)
 
+def soft_round(x, beta = 100):
+    return (1 / (1 + torch.exp(-(100 * (x - 0.5)))))
+
+def aconv2d(input, adj, weight, mask, bias=None, stride=1, padding=0, dilation=1, groups=1):
+    return F.conv2d(input, soft_round(adj*weight), bias, stride, padding, dilation)
+
 class Learner(nn.Module):
 
     def __init__(self, config, neuromodulation=True):
@@ -41,7 +47,19 @@ class Learner(nn.Module):
         self.vars_bn = nn.ParameterList()
 
         for i, (name, param) in enumerate(self.config):
-            if 'conv' in name:
+
+            if name is 'aconv':
+                # [ch_out, ch_in, kernelsz, kernelsz]
+                w = nn.Parameter(torch.ones(*param[:4]))
+                adj = nn.Parameter(torch.Tensor(w.shape).uniform_(0, 1))
+                # gain=1 according to cbfin's implementation
+                torch.nn.init.kaiming_normal_(w)
+                self.vars.append(w)
+                self.vars.append(adj)
+                # [ch_out]
+                self.vars.append(nn.Parameter(torch.zeros(param[0])))
+
+            elif 'conv' in name:
                 # [ch_out, ch_in, kernelsz, kernelsz]
                 w = nn.Parameter(torch.ones(*param[:4]))
                 # gain=1 according to cbfin's implementation
@@ -260,34 +278,27 @@ class Learner(nn.Module):
                 data = F.relu(data)
                 data = maxpool(data, kernel_size=2, stride=2)
                 
-                w,b = vars[22], vars[23]
+                w,adj,b = vars[22], vars[23], vars[24]
 
                 # replace Aconv2d here vv to get adjacency then mult by fc mask
+                data = aconv2d(data, adj, w, fc_mask, b)
 
-                if torch.cuda.is_available():
-                    device = torch.device('cuda')
-                else:
-                    device = torch.device('cpu')
-
-                if i is 0:
-                    # define Aconv layer 
-                    self.AConv_layer = AConv2d(256, 1, 3, given_weight=w, given_bias=b).to(torch.device(device))
-                data = self.AConv_layer(data, 0, mask=fc_mask)
+                print(adj)
 
                 # data = conv2d(data, w, b, stride=1)
-                w,b, = vars[24], vars[25]
+                w,b, = vars[25], vars[26]
                 running_mean, running_var = self.vars_bn[10], self.vars_bn[11]
                 data = F.batch_norm(data, running_mean, running_var, weight=w, bias=b, training=True)
                 data = F.relu(data)
                 # data = maxpool(data, kernel_size=2, stride=2)
 
                 data = data.view(data.size(0), 2304) #nothing-max-max
-                # data = data*fc_mask
+                data = data*fc_mask
                 # print(data.shape)
 
                 
 
-                w,b = vars[26], vars[27]
+                w,b = vars[27], vars[28]
                 data = F.linear(data, w, b)
 
                 try:

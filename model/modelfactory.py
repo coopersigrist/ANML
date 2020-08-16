@@ -89,7 +89,7 @@ class ModelFactory():
                     ('bn1', [channels]),
                     ('conv2', [channels, channels, 3, 3, 1, 0]),
                     ('bn2', [channels]),
-                    ('conv3', [channels, channels, 3, 3, 1, 0]),
+                    ('aconv', [channels, channels, 3, 3, 1, 0]),
                     ('bn3', [channels]),
                     ('fc', [1000, size_of_representation]),
                 ]

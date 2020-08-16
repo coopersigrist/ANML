@@ -161,9 +161,7 @@ class MetaLearingClassification(nn.Module):
         if fast_weights is None:
             fast_weights = self.net.parameters()
 
-        # changed allow_unused to True and added logic to not update when grad is None
-
-        grad = torch.autograd.grad(loss, fast_weights, allow_unused=True)
+        grad = torch.autograd.grad(loss, fast_weights, allow_unused=False)
 
 
         fast_weights = list(
