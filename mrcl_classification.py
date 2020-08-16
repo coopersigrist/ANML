@@ -61,12 +61,6 @@ def main(args):
 
     utils.freeze_layers(args.rln, maml)
 
-    # Lists for plotting
-
-    losses = []
-    steps = []
-    accuracies = []
-    
     for step in range(args.steps):
 
         t1 = np.random.choice(args.classes, args.tasks, replace=False)
@@ -86,6 +80,7 @@ def main(args):
 
         # Evaluation during training for sanity checks
         if step % 40 == 0:
+            print(loss)
             writer.add_scalar('/metatrain/train/accuracy', accs, step)
             writer.add_scalar('/metatrain/train/loss', loss, step)
             logger.info('step: %d \t training acc %s', step, str(accs))
@@ -96,16 +91,6 @@ def main(args):
             utils.log_accuracy(maml, my_experiment, iterator_test, device, writer, step)
             utils.log_accuracy(maml, my_experiment, iterator_train, device, writer, step)
 
-
-    fig, (ax1, ax2) = plt.subplots(2, sharex=True)
-    fig.suptitle('Loss and Accuracy of ANML w/ ACONV')
-    ax1.plot(steps, losses)
-    ax1.set_title("Loss")
-    ax2.plot(steps, accuracies)
-    ax2.set_title("accuracy")  
-    plt.savefig("testplot.png")
-
-#
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
     argparser.add_argument('--steps', type=int, help='epoch number', default=40000)

@@ -6,17 +6,18 @@ import torch.nn.functional as F
 
 class AConv2d(nn.Conv2d):
 
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, bias=False, datasets=1, same_init=False, Beta=False, mask=None):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, given_weight=None, given_bias=None, bias=False, datasets=1, same_init=False, Beta=False, mask=None):
         super().__init__(in_channels, out_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, bias=bias)
         
+        if given_weight is not None:
+            self.weight = nn.Parameter(given_weight, requires_grad=True)
+        if given_bias is not None:
+            self.bias = nn.Parameter(given_bias, requires_grad=True)
 
         cuda = torch.device('cuda')
 
-        mask = mask.view((256, 1, 3, 3))
-        # self.weight = nn.Parameter(torch.reshape(self.weight, mask.shape))
-
-
         if mask is not None:
+            mask = mask.view((256, 1, 3, 3))
             self.adjx = nn.ParameterList([nn.Parameter(mask * (torch.Tensor(self.weight.shape).uniform_(0, 1).to(cuda)) ,requires_grad=True) for i in range(datasets)])
         else:
              self.adjx = nn.ParameterList([nn.Parameter(torch.Tensor(self.weight.shape).uniform_(0, 1).to(cuda),requires_grad=True) for i in range(datasets)])
@@ -32,17 +33,15 @@ class AConv2d(nn.Conv2d):
             self.initial_beta = self.beta
         else:
             self.Beta = False
-
-    # get adjacency func
-
-    def mult_adj(self, to_mult):
-        ''' Takes a Tensor -- to_mult -- and changes the adjacency matrix to be itself multiplied by the new tensor'''
-        self.adjx
         
     def soft_round(self, x, beta = 100):
         return (1 / (1 + torch.exp(-(beta * (x - 0.5)))))
         
-    def forward(self, input, dataset, round_=False):
+    def forward(self, input, dataset, round_=False, weight=None, given_bias=None, mask=None):
+        
+        if mask is not None:
+            mask = mask.view((256, 1, 3, 3))
+
         if round_:
             if self.Beta:
                 return F.conv2d(input, (self.soft_round(self.adjx[dataset], self.beta).round().float())*self.weight, bias=self.bias, stride=self.stride, padding=self.padding, dilation=self.dilation)

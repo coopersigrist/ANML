@@ -101,6 +101,8 @@ class Learner(nn.Module):
                 continue
             else:
                 raise NotImplementedError
+        
+        
 
 
     def extra_repr(self):
@@ -226,7 +228,7 @@ class Learner(nn.Module):
                 # NM Output
 
                 w,b = vars[12], vars[13]
-                fc_mask = F.sigmoid(F.linear(nm_data, w, b)).view(nm_data.size(0), 2304)
+                fc_mask = torch.sigmoid(F.linear(nm_data, w, b)).view(nm_data.size(0), 2304)
 
 
                 # =========== PREDICTION NETWORK ===========
@@ -267,21 +269,17 @@ class Learner(nn.Module):
                 else:
                     device = torch.device('cpu')
 
-
-                AConv_layer = AConv2d(256, 1, 3, mask=fc_mask).to(torch.device(device))
-                data = AConv_layer(data, 0)
-
+                if i is 0:
+                    # define Aconv layer 
+                    self.AConv_layer = AConv2d(256, 1, 3, given_weight=w, given_bias=b).to(torch.device(device))
+                data = self.AConv_layer(data, 0, mask=fc_mask)
 
                 # data = conv2d(data, w, b, stride=1)
-                # print(data.shape)
                 w,b, = vars[24], vars[25]
                 running_mean, running_var = self.vars_bn[10], self.vars_bn[11]
                 data = F.batch_norm(data, running_mean, running_var, weight=w, bias=b, training=True)
                 data = F.relu(data)
-                #data = maxpool(data, kernel_size=2, stride=2)
-
-                # Alin_layer = ALinear(3, 768)
-                # Alin_layer(data, 0)
+                # data = maxpool(data, kernel_size=2, stride=2)
 
                 data = data.view(data.size(0), 2304) #nothing-max-max
                 # data = data*fc_mask
