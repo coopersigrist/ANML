@@ -116,8 +116,8 @@ def main(args):
                     maml.parameters()[-1].data = w
 
                     if args.neuromodulation:
-                        weights2reset = ["vars_26"] 
-                        biases2reset = ["vars_27"]
+                        weights2reset = ["vars_27"] 
+                        biases2reset = ["vars_28"]
                     else:
                         weights2reset = ["vars_14"]
                         biases2reset = ["vars_15"]

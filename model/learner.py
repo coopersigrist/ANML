@@ -5,7 +5,6 @@ import numpy as np
 import torch
 from torch import nn
 from torch.nn import functional as F
-from .layers import AConv2d, ALinear, AConvTranspose2d
 
 logger = logging.getLogger("experiment")
 
@@ -282,8 +281,6 @@ class Learner(nn.Module):
 
                 # replace Aconv2d here vv to get adjacency then mult by fc mask
                 data = aconv2d(data, adj, w, fc_mask, b)
-
-                print(adj)
 
                 # data = conv2d(data, w, b, stride=1)
                 w,b, = vars[25], vars[26]
